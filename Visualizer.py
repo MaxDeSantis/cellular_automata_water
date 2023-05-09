@@ -15,11 +15,12 @@ class Visualizer:
         pygame.display.set_caption('Cellular Automata Water')
         
         self.COLOR_AIR = (255, 255, 255)
-        self.COLOR_SOLID = (127, 255, 0)
+        self.COLOR_SOLID = (127, 75, 0)
         self.COLOR_WATER = (0, 0, 255)
         
         
-        self.dragging = False
+        self.solid_dragging = False
+        self.water_dragging = False
         self.background = pygame.Surface(self.screen.get_size())
         
         self.font = pygame.font.SysFont("monospace", 30)
@@ -33,12 +34,19 @@ class Visualizer:
                 return False
             
             if event.type == pygame.MOUSEBUTTONDOWN:
-                self.dragging = True
+                if event.button == pygame.BUTTON_LEFT:
+                    self.solid_dragging = True
+                if event.button == pygame.BUTTON_RIGHT:
+                    self.water_dragging = True
+                    
             if event.type == pygame.MOUSEBUTTONUP:
-                self.dragging = False
-
+                if event.button == pygame.BUTTON_LEFT:
+                    self.solid_dragging = False
+                if event.button == pygame.BUTTON_RIGHT:
+                    self.water_dragging = False
         
-        if self.dragging:
+        
+        if self.solid_dragging:
             pos = pygame.mouse.get_pos()
             
             x = pos[0] // self.params.GRID_SIZE
@@ -46,6 +54,15 @@ class Visualizer:
             
             new_pos = Position(x, y)
             sim_state.add_solid(new_pos)
+        
+        elif self.water_dragging:
+            pos = pygame.mouse.get_pos()
+            
+            x = pos[0] // self.params.GRID_SIZE
+            y = pos[1] // self.params.GRID_SIZE
+            
+            new_pos = Position(x, y)
+            sim_state.add_water(new_pos)
 
         pygame.draw.rect(self.background, self.COLOR_AIR, (0, 0, self.size[0], self.size[1]))
         
@@ -53,10 +70,14 @@ class Visualizer:
             y = i // self.params.WIDTH
             x = i - y * self.params.WIDTH
             
+            water = sim_state.water[y*self.params.WIDTH + x]
             if solid:
                 rect = pygame.Rect(x*self.params.GRID_SIZE, y*self.params.GRID_SIZE, self.params.GRID_SIZE, self.params.GRID_SIZE)
                 pygame.draw.rect(self.background, self.COLOR_SOLID, rect, self.params.GRID_SIZE)
-                
+            elif water > 0:
+                water_weighted_color = (0, 0, water)
+                rect = pygame.Rect(x*self.params.GRID_SIZE, y*self.params.GRID_SIZE, self.params.GRID_SIZE, self.params.GRID_SIZE)
+                pygame.draw.rect(self.background, water_weighted_color, rect, self.params.GRID_SIZE)
         
         self.screen.blit(self.background, (0,0))
         pygame.display.flip()
